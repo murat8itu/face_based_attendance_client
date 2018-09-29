@@ -29,7 +29,7 @@ class FaceDataset(QMainWindow):
 
     def detect_webcam_face(self, status):
         self.face_id = self.studentIDText.text()
-        self.folderName = "user" + self.face_id  # creating the person or user folder
+        self.folderName = "user" + self.face_id
         self.folderPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset/" + self.folderName)
         if not os.path.exists(self.folderPath):
             os.makedirs(self.folderPath)
@@ -75,12 +75,10 @@ class FaceDataset(QMainWindow):
                     # Save the captured image into the datasets folder
                     cv2.imwrite(self.folderPath + "/User." + self.face_id + "." + str(self.count) + ".jpg",
                                 gray[y:y + h, x:x + w])
-                    #cv2.imwrite("dataset/User." + str(self.face_id) + '.' + str(self.count) + ".jpg", gray[y:y + h, x:x + w])
-                    #cv2.imshow('image', img)
                 elif not self.isDataAdded:
                     self.isDataAdded = True
                     self.addDatatoDB()
-                    self.statusLabel.setText("<font color='Blue'>Dataset Completed</font>")
+                    self.statusLabel.setText("<font color='Blue'>Dataset Added</font>")
         return img
 
     def displayImage(self, img, window =1):
