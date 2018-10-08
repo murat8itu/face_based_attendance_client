@@ -17,8 +17,8 @@
    <widget class="QPushButton" name="addToDatasetButton">
     <property name="geometry">
      <rect>
-      <x>570</x>
-      <y>94</y>
+      <x>574</x>
+      <y>135</y>
       <width>114</width>
       <height>32</height>
      </rect>
@@ -31,7 +31,7 @@
     <property name="geometry">
      <rect>
       <x>60</x>
-      <y>20</y>
+      <y>23</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -57,7 +57,7 @@
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>60</y>
+      <y>83</y>
       <width>101</width>
       <height>16</height>
      </rect>
@@ -70,7 +70,7 @@
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>60</y>
+      <y>79</y>
       <width>161</width>
       <height>21</height>
      </rect>
@@ -80,7 +80,7 @@
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>100</y>
+      <y>139</y>
       <width>251</width>
       <height>21</height>
      </rect>
@@ -90,7 +90,7 @@
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>100</y>
+      <y>140</y>
       <width>101</width>
       <height>16</height>
      </rect>
@@ -103,9 +103,25 @@
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>140</y>
+      <y>170</y>
       <width>640</width>
       <height>480</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="pictureLabel">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>10</y>
+      <width>120</width>
+      <height>120</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -118,8 +134,8 @@
    <widget class="QLabel" name="statusLabel">
     <property name="geometry">
      <rect>
-      <x>420</x>
-      <y>100</y>
+      <x>422</x>
+      <y>138</y>
       <width>151</width>
       <height>20</height>
      </rect>
