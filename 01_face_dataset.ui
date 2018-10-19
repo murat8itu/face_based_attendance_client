@@ -17,7 +17,7 @@
    <widget class="QPushButton" name="addToDatasetButton">
     <property name="geometry">
      <rect>
-      <x>574</x>
+      <x>564</x>
       <y>135</y>
       <width>114</width>
       <height>32</height>
@@ -31,10 +31,16 @@
     <property name="geometry">
      <rect>
       <x>60</x>
-      <y>23</y>
+      <y>28</y>
       <width>81</width>
       <height>16</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>14</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Student ID:</string>
@@ -43,11 +49,17 @@
    <widget class="QLineEdit" name="studentIDText">
     <property name="geometry">
      <rect>
-      <x>160</x>
+      <x>140</x>
       <y>20</y>
       <width>81</width>
-      <height>21</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>14</pointsize>
+     </font>
     </property>
     <property name="inputMask">
      <string>99999</string>
@@ -57,10 +69,16 @@
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>83</y>
+      <y>84</y>
       <width>101</width>
       <height>16</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>14</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Student Name:</string>
@@ -69,31 +87,49 @@
    <widget class="QLineEdit" name="studentNameText">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>79</y>
+      <x>140</x>
+      <y>76</y>
       <width>161</width>
-      <height>21</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>14</pointsize>
+     </font>
     </property>
    </widget>
    <widget class="QLineEdit" name="studentEmailText">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>139</y>
+      <x>140</x>
+      <y>129</y>
       <width>251</width>
-      <height>21</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>14</pointsize>
+     </font>
     </property>
    </widget>
    <widget class="QLabel" name="studentEmailLabel">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>140</y>
+      <x>37</x>
+      <y>135</y>
       <width>101</width>
       <height>16</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>14</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Student E-mail:</string>
@@ -134,11 +170,56 @@
    <widget class="QLabel" name="statusLabel">
     <property name="geometry">
      <rect>
-      <x>422</x>
-      <y>138</y>
+      <x>407</x>
+      <y>140</y>
       <width>151</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="palette">
+     <palette>
+      <active>
+       <colorrole role="WindowText">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>0</red>
+          <green>0</green>
+          <blue>255</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </active>
+      <inactive>
+       <colorrole role="WindowText">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>0</red>
+          <green>0</green>
+          <blue>255</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </inactive>
+      <disabled>
+       <colorrole role="WindowText">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>128</red>
+          <green>128</green>
+          <blue>128</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </disabled>
+     </palette>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>14</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="autoFillBackground">
      <bool>false</bool>

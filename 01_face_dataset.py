@@ -74,19 +74,23 @@ class FaceDataSet(QMainWindow):
         for(x,y,w,h) in faces:
             if self.addToDatasetEnabled:
                 self.count += 1
-                if self.count <= 30:
+                if self.count <= 10:
                     # Save the captured image into the datasets folder
                     cv2.imwrite(self.folderPath + "/User." + self.face_id + "." + str(self.count) + ".jpg",
                                 gray[y:y + h, x:x + w])
                     if not self.isOpenFaceDataAdded:
-                        self.openFaceImg = img[y - 120:y + h + 80, x - 80: x + 80 + w]
+                        y0 = max(y - 120, 0)
+                        y1 = min (y + h + 80, 480)
+                        x0 = max(x - 80, 0)
+                        x1 = min(x + 80 + w, 640)
+                        self.openFaceImg = img[y0:y1, x0: x1]
                         cv2.imwrite(self.folderPath + "/User." + self.face_id + ".0.jpg",
                                     self.openFaceImg)
                         self.isOpenFaceDataAdded = True
                 elif not self.isOpenCVDataAdded:
                     self.isOpenCVDataAdded = True
                     self.add_data_to_db()
-                    self.statusLabel.setText("<font color='Blue'>Dataset Added</font>")
+                    self.statusLabel.setText("Dataset Added")
                     image_path = QImage(self.folderPath + "/User." + self.face_id + ".0.jpg")
                     self.pictureLabel.setPixmap(QPixmap.fromImage(image_path))
                     self.pictureLabel.setScaledContents(True)
@@ -138,5 +142,15 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = FaceDataSet()
     window.setWindowTitle("Face Dataset")
+    window.setStyleSheet("""
+                    QPushButton {
+                        border: 2px solid #8f8f91;
+                        border-radius: 6px;
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                              stop: 0 #f6f7fa, stop: 1 #dadbde);
+                        min-width: 80px;
+                    }
+
+                        """)
     window.show()
     sys.exit(app.exec())

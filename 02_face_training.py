@@ -34,25 +34,25 @@ def get_images_and_labels(path):
                     pil_img = Image.open(singleImagePath).convert('L') # convert it to grayscale
                     img_numpy = np.array(pil_img,'uint8')
 
-                    id = int(os.path.split(singleImagePath)[-1].split(".")[1])
+                    student_id = os.path.split(singleImagePath)[-1].split(".")[1]
                     counter = int(os.path.split(singleImagePath)[-1].split(".")[2])
                     if counter == 0:
                         openface_image = face_recognition.load_image_file(singleImagePath)
                         openface_encoding = face_recognition.face_encodings(openface_image)[0]
                         openface_encodings.append(openface_encoding)
-                        openface_ids.append(id)
+                        openface_ids.append(student_id)
                     else:
                         #print("---singleImagePath", singleImagePath, " id:", id, " count:", counter)
                         faces = faceDetector.detectMultiScale(img_numpy)
 
                         for (x,y,w,h) in faces:
                             opencv_faces.append(img_numpy[y:y+h,x:x+w])
-                            opencv_ids.append(id)
+                            opencv_ids.append(int(student_id))
 
     return opencv_faces, opencv_ids, openface_encodings, openface_ids
 
 
-print ("\n [INFO] Training faces. It will take a few seconds. Wait ...")
+print ("\n Training faces. It will take a few seconds. Please wait ...")
 
 opencv_faces, opencv_ids, openface_encodings, openface_ids = get_images_and_labels(path)
 
@@ -64,4 +64,4 @@ with open('trainer/openface_trainer_encodings', 'wb') as fp:
 with open('trainer/openface_trainer_ids', 'wb') as fp:
     pickle.dump(openface_ids, fp)
 
-print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(openface_ids))))
+print("\n {0} faces trained.".format(len(np.unique(openface_ids))))

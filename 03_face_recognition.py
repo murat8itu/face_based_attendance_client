@@ -3,16 +3,28 @@ import cv2
 import configparser
 import face_recognition
 import pickle
+import datetime
+
+from Student import Student
+from collections import defaultdict
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QStandardItemModel, QStandardItem
 from PyQt5.uic import loadUi
 
 
 class FaceRecognition(QMainWindow):
-    face_id = 0
+    #face_id = 0
+    student_dictionary = {}
     process_this_frame = True
+    in_class = defaultdict(bool)
+    all_frame_count = 0
+    recognized_frame_count = defaultdict(int)
+    recognized_frame_start = defaultdict(int)
+    recognition_check_frame = 10  # Check each 10 frames
+    confidence_frame_count = recognition_check_frame * 0.4  # at least 40% recognized
+    msec_timer = 10
     db = 'db.ini'
 
     def __init__(self):
@@ -27,16 +39,32 @@ class FaceRecognition(QMainWindow):
         self.open_face_enabled = False
         self.openFaceRecognitionButton.setCheckable(True)
         self.openFaceRecognitionButton.toggled.connect(self.openface_button_clicked)
+        self.list_model = QStandardItemModel(self.checkedInListView)
+        self.checkedInListView.setModel(self.list_model)
+
+        self.load_db()
 
         self.load_open_cv()
         self.load_open_face()
 
-        self.config = configparser.ConfigParser()
-        self.config.read(self.db)
-
         self.font = cv2.FONT_HERSHEY_SIMPLEX
 
-        self.startWebCam();
+        self.startWebCam()
+
+    def load_db(self):
+        self.config = configparser.ConfigParser()
+        self.config.read(self.db)
+        user_list = self.config['USERS']
+
+        for item in user_list:
+            student_id = item.split('_')[0]
+
+            if self.student_dictionary.get(student_id) is None:
+                student = Student()
+                student.id = student_id
+                student.full_name = self.config['USERS'][str(student_id) + '_name']
+                student.email = self.config['USERS'][str(student_id) + '_email']
+                self.student_dictionary[student_id] = student
 
     def load_open_cv(self):
         self.opencv_face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -44,6 +72,11 @@ class FaceRecognition(QMainWindow):
         self.opencv_face_recognizer.read('trainer/opencv_trainer.yml')
 
     def load_open_face(self):
+        #item = QStandardItem("1")
+        #item.setCheckable(True)
+        # Add the item to the model
+        #self.list_model.appendRow(item)
+
         with open('trainer/openface_trainer_encodings', 'rb') as fp:
             self.openface_known_face_encodings = pickle.load(fp)
         with open('trainer/openface_trainer_ids', 'rb') as fp:
@@ -76,7 +109,7 @@ class FaceRecognition(QMainWindow):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
-        self.timer.start(5)
+        self.timer.start(self.msec_timer)
 
     def update_frame(self):
         ret, image = self.capture.read()
@@ -100,28 +133,70 @@ class FaceRecognition(QMainWindow):
 
         # Only process every other frame of video to save time
         if self.process_this_frame:
-            # Find all the faces and face encodings in the current frame of video
-            face_locations = face_recognition.face_locations(rgb_small_frame, 2)
-            face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
-            face_names = []
+            self.process_this_frame = False
+
+            self.all_frame_count +=1
+
+            # Find all the faces and face encodings in the current frame of video
+            self.face_locations = face_recognition.face_locations(rgb_small_frame, 2, "hog")
+            face_encodings = face_recognition.face_encodings(rgb_small_frame, self.face_locations)
+
+            self.face_names = []
             for face_encoding in face_encodings:
                 # See if the face is a match for the known face(s)
                 #matches = face_recognition.compare_faces(self.openface_known_face_encodings, face_encoding)
                 tolerance = 0.5
                 matches = list(face_recognition.face_distance(self.openface_known_face_encodings, face_encoding) <= tolerance)
-                name = "Unknown"
+                name = ""
 
                 # If a match was found in known_face_encodings, just use the first one.
                 if True in matches:
                     first_match_index = matches.index(True)
-                    id = self.openface_known_face_ids[first_match_index]
-                    name = self.getNameFromDB(id)
+                    student_id = self.openface_known_face_ids[first_match_index]
+                    # Check if already checked in class
 
-                face_names.append(name)
+                    if not self.in_class[student_id]:
+                        # Set the initial recognized frame
+                        if self.recognized_frame_start[student_id] == 0:
+                            self.recognized_frame_start[student_id] = self.all_frame_count
+
+                        self.recognized_frame_count[student_id] += 1
+
+                        if (self.all_frame_count - self.recognized_frame_start[student_id]) >= self.recognition_check_frame:
+
+                            if self.recognized_frame_count[student_id] >= self.confidence_frame_count:
+
+                                self.in_class[student_id] = True
+                                full_name = self.getFullNameFromDB(student_id)
+                                now = datetime.datetime.now()
+                                item_string = str(now.hour) + ':' + str(now.minute) + ' - ' + str(student_id) + ' : ' + full_name + '  '
+                                item = QStandardItem(item_string)
+                                #font = item.font()
+                                #font.
+                                self.list_model.insertRow(0, item)
+                                #self.list_model.
+                                #print(" id:", id, " all frame:", self.all_frame_count)
+                                #print(" recognized_frame_start:", self.recognized_frame_start[id])
+                                #print(" recognized_frame_count:", self.recognized_frame_count[id])
+                                #print(" all_frame_count-recognized_frame_start:", (self.all_frame_count - self.recognized_frame_start[id]))
+                                #print(" recognition_check_frame:", self.recognition_check_frame)
+                                #print(" confidence_frame_count:", self.confidence_frame_count)
+
+                            else: #reset counters
+                                print(self.recognized_frame_count[student_id], " - reset counters")
+                                self.recognized_frame_start[student_id] = 0
+                                self.recognized_frame_count[student_id] = 0
+
+                    name = self.getNameFromDB(student_id)
+
+                self.face_names.append(name)
+
+        else:
+            self.process_this_frame = True
 
         # Display the results
-        for (top, right, bottom, left), name in zip(face_locations, face_names):
+        for (top, right, bottom, left), name in zip(self.face_locations, self.face_names):
             # Scale back up face locations since the frame we detected in was scaled to 1/4 size
             top *= 4
             right *= 4
@@ -134,7 +209,7 @@ class FaceRecognition(QMainWindow):
             # Draw a label with a name below the face
             #cv2.rectangle(img, (left, bottom - 40), (right, bottom), (0, 0, 255), cv2.FILLED)
             #font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(img, name, (left + 6, bottom - 6), self.font, 1, (255, 255, 255), 1)
+            cv2.putText(img, name, (left + 6, bottom - 6), self.font, 1, (255, 255, 255), 2)
         return img
 
     def open_cv_recognize_face(self, img):
@@ -143,10 +218,10 @@ class FaceRecognition(QMainWindow):
 
         for(x,y,w,h) in faces:
             cv2.rectangle(img, (x,y), (x+w, y+h),(0,0,255),2)
-            id, confidence = self.opencv_face_recognizer.predict(gray[y:y + h, x:x + w])
+            student_id, confidence = self.opencv_face_recognizer.predict(gray[y:y + h, x:x + w])
             # Check if confidence is less them 100 ==> "0" is perfect match
             if (confidence < 60):
-                name = self.getNameFromDB(id)
+                name = self.getNameFromDB(student_id)
                 confidence = "  {0}%".format(round(100 - confidence))
             else:
                 name = "unknown"
@@ -177,15 +252,33 @@ class FaceRecognition(QMainWindow):
 
     def getNameFromDB(self, user_id):
         try:
-            name = self.config['USERS'][str(user_id) + '_name']
-            return name.split()[0]
+            student = self.student_dictionary.get(user_id)
+            return student.full_name.split()[0]
+        except:
+            return "unknown"
+
+    def getFullNameFromDB(self, user_id):
+        try:
+            student = self.student_dictionary.get(user_id)
+            return student.full_name
         except:
             return "unknown"
 
 
 if __name__ == '__main__':
+
     app = QApplication(sys.argv)
     window = FaceRecognition()
     window.setWindowTitle("Webcam Client Test")
+    window.setStyleSheet("""
+                    QPushButton {
+                        border: 2px solid #8f8f91;
+                        border-radius: 6px;
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                              stop: 0 #f6f7fa, stop: 1 #dadbde);
+                        min-width: 80px;
+                    }
+
+                        """)
     window.show()
     sys.exit(app.exec())
