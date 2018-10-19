@@ -15,7 +15,6 @@ from PyQt5.uic import loadUi
 
 
 class FaceRecognition(QMainWindow):
-    #face_id = 0
     student_dictionary = {}
     process_this_frame = True
     in_class = defaultdict(bool)
@@ -72,11 +71,6 @@ class FaceRecognition(QMainWindow):
         self.opencv_face_recognizer.read('trainer/opencv_trainer.yml')
 
     def load_open_face(self):
-        #item = QStandardItem("1")
-        #item.setCheckable(True)
-        # Add the item to the model
-        #self.list_model.appendRow(item)
-
         with open('trainer/openface_trainer_encodings', 'rb') as fp:
             self.openface_known_face_encodings = pickle.load(fp)
         with open('trainer/openface_trainer_ids', 'rb') as fp:
@@ -172,16 +166,7 @@ class FaceRecognition(QMainWindow):
                                 now = datetime.datetime.now()
                                 item_string = str(now.hour) + ':' + str(now.minute) + ' - ' + str(student_id) + ' : ' + full_name + '  '
                                 item = QStandardItem(item_string)
-                                #font = item.font()
-                                #font.
                                 self.list_model.insertRow(0, item)
-                                #self.list_model.
-                                #print(" id:", id, " all frame:", self.all_frame_count)
-                                #print(" recognized_frame_start:", self.recognized_frame_start[id])
-                                #print(" recognized_frame_count:", self.recognized_frame_count[id])
-                                #print(" all_frame_count-recognized_frame_start:", (self.all_frame_count - self.recognized_frame_start[id]))
-                                #print(" recognition_check_frame:", self.recognition_check_frame)
-                                #print(" confidence_frame_count:", self.confidence_frame_count)
 
                             else: #reset counters
                                 print(self.recognized_frame_count[student_id], " - reset counters")
@@ -205,10 +190,6 @@ class FaceRecognition(QMainWindow):
 
             # Draw a box around the face
             cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), 2)
-
-            # Draw a label with a name below the face
-            #cv2.rectangle(img, (left, bottom - 40), (right, bottom), (0, 0, 255), cv2.FILLED)
-            #font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(img, name, (left + 6, bottom - 6), self.font, 1, (255, 255, 255), 2)
         return img
 
@@ -220,7 +201,7 @@ class FaceRecognition(QMainWindow):
             cv2.rectangle(img, (x,y), (x+w, y+h),(0,0,255),2)
             student_id, confidence = self.opencv_face_recognizer.predict(gray[y:y + h, x:x + w])
             # Check if confidence is less them 100 ==> "0" is perfect match
-            if (confidence < 60):
+            if confidence < 60:
                 name = self.getNameFromDB(student_id)
                 confidence = "  {0}%".format(round(100 - confidence))
             else:
@@ -230,7 +211,6 @@ class FaceRecognition(QMainWindow):
             cv2.putText(img, str(name), (x + 5, y - 5), self.font, 1, (255, 255, 255), 2)
             cv2.putText(img, str(confidence), (x + 5, y + h - 5), self.font, 1, (255, 255, 0), 1)
         return img
-
 
     def displayImage(self, img, window =1):
         qformat=QImage.Format_Indexed8
