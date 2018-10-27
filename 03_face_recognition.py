@@ -32,8 +32,8 @@ class FaceRecognition(QMainWindow):
         loadUi('03_face_recognition.ui', self)
 
         self.open_cv_enabled = False
-        self.openCVRecognitionButton.setCheckable(True)
-        self.openCVRecognitionButton.toggled.connect(self.opencv_button_clicked)
+        # self.openCVRecognitionButton.setCheckable(True)
+        # self.openCVRecognitionButton.toggled.connect(self.opencv_button_clicked)
 
         self.open_face_enabled = False
         self.openFaceRecognitionButton.setCheckable(True)
@@ -89,12 +89,12 @@ class FaceRecognition(QMainWindow):
     def openface_button_clicked(self, status):
         if status:
             self.openFaceRecognitionButton.setText("Stop Recognition")
-            self.openCVRecognitionButton.setEnabled(False)
+            # self.openCVRecognitionButton.setEnabled(False)
             self.open_face_enabled = True
         else:
             self.openFaceRecognitionButton.setText("OpenFace Recognition")
             self.open_face_enabled = False
-            self.openCVRecognitionButton.setEnabled(True)
+            # self.openCVRecognitionButton.setEnabled(True)
 
     def startWebCam(self):
         self.capture = cv2.VideoCapture(0)
@@ -164,7 +164,7 @@ class FaceRecognition(QMainWindow):
                                 self.in_class[student_id] = True
                                 full_name = self.getFullNameFromDB(student_id)
                                 now = datetime.datetime.now()
-                                item_string = str(now.hour) + ':' + str(now.minute) + ' - ' + str(student_id) + ' : ' + full_name + '  '
+                                item_string = str(now.hour).zfill(2) + ':' + str(now.minute).zfill(2) + ' - ' + str(student_id) + ' : ' + full_name + '  '
                                 item = QStandardItem(item_string)
                                 self.list_model.insertRow(0, item)
 

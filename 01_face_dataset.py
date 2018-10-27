@@ -134,7 +134,7 @@ class FaceDataSet(QMainWindow):
         config['USERS'][self.face_id + '_name'] = student_name.strip()
         student_email = self.studentEmailText.text()
         config['USERS'][self.face_id + '_email'] = student_email.strip()
-        with open('db.ini', 'w') as configfile:
+        with open(self.db, 'w') as configfile:
             config.write(configfile)
 
 
