@@ -8,12 +8,13 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.uic import loadUi
-
+from FaceDB import FaceDB
 
 class FaceDataSet(QMainWindow):
 
     faceDetectionEnabled = True
     db = 'db.ini'
+    faceDB = FaceDB()
 
     def __init__(self):
         super(FaceDataSet, self).__init__()
@@ -74,7 +75,7 @@ class FaceDataSet(QMainWindow):
         for(x,y,w,h) in faces:
             if self.addToDatasetEnabled:
                 self.count += 1
-                if self.count <= 10:
+                if self.count <= 5:
                     # Save the captured image into the datasets folder
                     cv2.imwrite(self.folderPath + "/User." + self.face_id + "." + str(self.count) + ".jpg",
                                 gray[y:y + h, x:x + w])
@@ -136,6 +137,11 @@ class FaceDataSet(QMainWindow):
         config['USERS'][self.face_id + '_email'] = student_email.strip()
         with open(self.db, 'w') as configfile:
             config.write(configfile)
+
+
+        # ADD to MYSQL
+        self.faceDB.insert_student(self.face_id, student_name , student_email, (self.folderPath + "/User." + self.face_id + ".0.jpg"))
+
 
 
 if __name__ == '__main__':
