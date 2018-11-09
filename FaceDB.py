@@ -1,5 +1,8 @@
+import datetime
+
 from configparser import ConfigParser
 from mysql.connector import MySQLConnection, Error
+
 
 class FaceDB(object):
 
@@ -54,13 +57,11 @@ class FaceDB(object):
             photo = f.read()
         return photo
 
-
     def insert_student(self, student_id, student_name, student_email, picture_file):
         query = "INSERT INTO STUDENT(id, name, email, picture) " \
                 "VALUES(%s, %s, %s, %s)" \
                 "ON DUPLICATE KEY " \
                 "UPDATE name = %s, email = %s, picture = %s"
-
 
         picture = self.read_file(picture_file)
         args = (student_id, student_name, student_email, picture, student_name, student_email, picture)
@@ -73,9 +74,36 @@ class FaceDB(object):
             cursor.execute(query, args)
 
             print ("Student ID:", student_id, " is inserted")
-            #if cursor.lastrowid:
+            # if cursor.lastrowid:
             #    print('last insert id', cursor.lastrowid)
-            #else:
+            # else:
+                # print('last insert id not found')
+
+            conn.commit()
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def insert_student_attendance(self, student_id, course_id, date):
+        query = "INSERT INTO STUDENT_ATTENDANCE(student_id, course_id, attend_date) " \
+                "VALUES(%s, %s, %s)"
+
+        args = (student_id, course_id, date)
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+
+            print ("Student ID:", student_id, " is inserted")
+            # if cursor.lastrowid:
+            #    print('last insert id', cursor.lastrowid)
+            # else:
                 # print('last insert id not found')
 
             conn.commit()
@@ -115,13 +143,160 @@ class FaceDB(object):
             cursor.close()
             conn.close()
 
+    def query_all_student_with_images(self):
+        query = "SELECT id, name, email, picture FROM STUDENT"
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query)
+
+            data = cursor.fetchall()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def query_all_student_no_images(self):
+        query = "SELECT id, name, email FROM STUDENT"
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query)
+
+            data = cursor.fetchall()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def query_all_course_classroom(self):
+        query = "SELECT course_id, classroom_id FROM classroom_course"
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query)
+
+            data = cursor.fetchall()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def query_all_course_students(self):
+        query = "SELECT course_id, student_id FROM course_student"
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query)
+
+            data = cursor.fetchall()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def query_student(self, student_id ):
+        query = "SELECT id, name, email, picture FROM STUDENT " \
+                 "WHERE STUDENT.id = %s"
+
+        args = (student_id, )
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+
+            data = cursor.fetchone()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def query_course(self, classroom_id ):
+        query = "SELECT course.id, course.name " \
+                "FROM course, classroom_course "  \
+                "WHERE classroom_course.course_id = course.id AND "  \
+                "classroom_course.classroom_id = %s"
+
+        args = (classroom_id,)
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+
+            data = cursor.fetchone()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def query_classroom(self, classroom_id ):
+        query = "SELECT id, name " \
+                "FROM classroom "  \
+                "WHERE classroom.id = %s"
+
+        args = (classroom_id,)
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+
+            data = cursor.fetchone()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+
 if __name__ == '__main__':
     app = FaceDB()
-    app.insert_student(93895, 'Murat Unal','unalmurat1613@stundets.itu.edu', 'dataset/user93895/User.93895.0.jpg')
-    app.insert_student(94130, 'Prasanna Andaju','andojuprasa1773@students.itu.edu', 'dataset/user94130/User.94130.0.jpg')
-    app.insert_student(92927, 'Priyanka Shengole','shengolepriya1603@students.itu.edu', 'dataset/user92927/User.92927.0.jpg')
-    app.insert_student(94135, 'Soumya Devarakonda','soumya.rajesh1417@gmail.com', 'dataset/user94135/User.94135.0.jpg')
-    app.insert_student(91111, 'Emre Unl','emre@test.com', 'dataset/user91111/User.91111.0.jpg')
-    app.insert_student(91112, 'Ediz Unl','ediz@test.com', 'dataset/user91112/User.91112.0.jpg')
-    app.insert_student(91113, 'Gul Unl','gul@test.com', 'dataset/user91113/User.91113.0.jpg')
-    app.insert_student(99999, 'Alex Wu','alex@itu.edu', 'dataset/user99999/User.99999.0.jpg')
+    data4 = app.insert_student_attendance('912222', 'SWE 680', datetime.datetime.now())
+    print(data4)

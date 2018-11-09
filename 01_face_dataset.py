@@ -10,6 +10,7 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.uic import loadUi
 from FaceDB import FaceDB
 
+
 class FaceDataSet(QMainWindow):
 
     faceDetectionEnabled = True
@@ -141,7 +142,6 @@ class FaceDataSet(QMainWindow):
 
         # ADD to MYSQL
         self.faceDB.insert_student(self.face_id, student_name , student_email, (self.folderPath + "/User." + self.face_id + ".0.jpg"))
-
 
 
 if __name__ == '__main__':
