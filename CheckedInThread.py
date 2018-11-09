@@ -1,6 +1,5 @@
 import threading
 from FaceDB import FaceDB
-import time
 
 
 class CheckedInThread(threading.Thread):

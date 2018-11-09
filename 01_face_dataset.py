@@ -1,9 +1,7 @@
 import sys
 import cv2
 import os
-import configparser
 
-from os import path
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QImage, QPixmap
@@ -12,10 +10,17 @@ from FaceDB import FaceDB
 
 
 class FaceDataSet(QMainWindow):
-
-    faceDetectionEnabled = True
-    db = 'db.ini'
     faceDB = FaceDB()
+    count = 0
+    addToDatasetEnabled = False
+    isOpenFaceDataAdded = False
+    faceDetector = None
+    openFaceImg = None
+    capture = None
+    face_id = None
+    faceDetectionEnabled = True
+    folderName = None
+    folderPath = None
 
     def __init__(self):
         super(FaceDataSet, self).__init__()
@@ -28,7 +33,6 @@ class FaceDataSet(QMainWindow):
     def reset_counters(self):
         self.count = 0
         self.addToDatasetEnabled = False
-        self.isOpenCVDataAdded = False
         self.isOpenFaceDataAdded = False
         self.openFaceImg = None
         self.face_id = ""
@@ -55,9 +59,9 @@ class FaceDataSet(QMainWindow):
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_frame)
-        self.timer.start(5)
+        timer = QTimer(self)
+        timer.timeout.connect(self.update_frame)
+        timer.start(5)
 
     def update_frame(self):
         ret, image = self.capture.read()
@@ -65,7 +69,7 @@ class FaceDataSet(QMainWindow):
 
         if self.faceDetectionEnabled:
             detected_image = self.detect_face(image)
-            self.display_image(detected_image, 1)
+            self.display_image(detected_image)
         else:
             self.display_image(image, 1)
 
@@ -76,27 +80,20 @@ class FaceDataSet(QMainWindow):
         for(x,y,w,h) in faces:
             if self.addToDatasetEnabled:
                 self.count += 1
-                if self.count <= 5:
-                    # Save the captured image into the datasets folder
-                    cv2.imwrite(self.folderPath + "/User." + self.face_id + "." + str(self.count) + ".jpg",
-                                gray[y:y + h, x:x + w])
-                    if not self.isOpenFaceDataAdded:
-                        y0 = max(y - 120, 0)
-                        y1 = min (y + h + 80, 480)
-                        x0 = max(x - 80, 0)
-                        x1 = min(x + 80 + w, 640)
-                        self.openFaceImg = img[y0:y1, x0: x1]
-                        cv2.imwrite(self.folderPath + "/User." + self.face_id + ".0.jpg",
-                                    self.openFaceImg)
-                        self.isOpenFaceDataAdded = True
-                elif not self.isOpenCVDataAdded:
-                    self.isOpenCVDataAdded = True
+                if not self.isOpenFaceDataAdded:
+                    y0 = max(y - 120, 0)
+                    y1 = min (y + h + 80, 480)
+                    x0 = max(x - 80, 0)
+                    x1 = min(x + 80 + w, 640)
+                    self.openFaceImg = img[y0:y1, x0: x1]
+                    cv2.imwrite(self.folderPath + "/User." + self.face_id + ".0.jpg",
+                                self.openFaceImg)
+                    self.isOpenFaceDataAdded = True
                     self.add_data_to_db()
                     self.statusLabel.setText("Dataset Added")
                     image_path = QImage(self.folderPath + "/User." + self.face_id + ".0.jpg")
                     self.pictureLabel.setPixmap(QPixmap.fromImage(image_path))
                     self.pictureLabel.setScaledContents(True)
-
                     self.addToDatasetEnabled = False
                     self.addToDatasetButton.setText("Add to Dataset")
 
@@ -116,32 +113,22 @@ class FaceDataSet(QMainWindow):
         out_image = out_image.rgbSwapped()
         return out_image
 
-    def display_image(self, img, window=1):
+    def display_image(self, img):
         out_image = self.get_image(img)
 
-        if window == 1:
-            self.webCamLabel.setPixmap(QPixmap.fromImage(out_image))
-            self.webCamLabel.setScaledContents(True)
+        self.webCamLabel.setPixmap(QPixmap.fromImage(out_image))
+        self.webCamLabel.setScaledContents(True)
 
     def stop_web_cam(self):
         self.timer.stop()
 
     def add_data_to_db(self):
-        config = configparser.ConfigParser()
-        if path.exists(self.db):
-            config.read(self.db)
-        else:
-            config['USERS'] = {}
         student_name = self.studentNameText.text()
-        config['USERS'][self.face_id + '_name'] = student_name.strip()
         student_email = self.studentEmailText.text()
-        config['USERS'][self.face_id + '_email'] = student_email.strip()
-        with open(self.db, 'w') as configfile:
-            config.write(configfile)
-
 
         # ADD to MYSQL
-        self.faceDB.insert_student(self.face_id, student_name , student_email, (self.folderPath + "/User." + self.face_id + ".0.jpg"))
+        self.faceDB.insert_student(self.face_id, student_name , student_email,
+                                   (self.folderPath + "/User." + self.face_id + ".0.jpg"))
 
 
 if __name__ == '__main__':
