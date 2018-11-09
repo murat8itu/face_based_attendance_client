@@ -15,8 +15,4 @@ class CheckedInThread(threading.Thread):
     def run(self):
         self.faceDB.insert_student_attendance(self.student_id, self.course_id, self.date)
         # e-mail to student
-        count = 0
-        for i in range(1, 1000000):
-            count + 1
-            time.sleep(5)
         print(self.student_id, "done with thread")
