@@ -1,4 +1,4 @@
-import datetime
+import sys
 
 from configparser import ConfigParser
 from mysql.connector import MySQLConnection, Error
@@ -30,14 +30,12 @@ class FaceDB(object):
 
         return db
 
-
     def connect(self):
         """ Connect to MySQL database """
 
         db_config = self.read_db_config()
 
         try:
-            print('Connecting to MySQL database...')
             conn = MySQLConnection(**db_config)
 
             if conn.is_connected():
@@ -50,7 +48,6 @@ class FaceDB(object):
 
         finally:
             conn.close()
-            print('Connection closed.')
 
     def read_file(self, filename):
         with open(filename, 'rb') as f:
@@ -72,14 +69,8 @@ class FaceDB(object):
 
             cursor = conn.cursor()
             cursor.execute(query, args)
-
-            print ("Student ID:", student_id, " is inserted")
-            # if cursor.lastrowid:
-            #    print('last insert id', cursor.lastrowid)
-            # else:
-                # print('last insert id not found')
-
             conn.commit()
+
         except Error as error:
             print(error)
 
@@ -99,14 +90,8 @@ class FaceDB(object):
 
             cursor = conn.cursor()
             cursor.execute(query, args)
-
-            print ("Student ID:", student_id, " is inserted")
-            # if cursor.lastrowid:
-            #    print('last insert id', cursor.lastrowid)
-            # else:
-                # print('last insert id not found')
-
             conn.commit()
+
         except Error as error:
             print(error)
 
@@ -128,14 +113,8 @@ class FaceDB(object):
 
             cursor = conn.cursor()
             cursor.execute(query, args)
-
-            print ("Student ID:", student_id, " is updated")
-            #if cursor.lastrowid:
-            #    print('last insert id', cursor.lastrowid)
-            #else:
-            #    print('last insert id not found')
-
             conn.commit()
+
         except Error as error:
             print(error)
 
@@ -152,7 +131,6 @@ class FaceDB(object):
 
             cursor = conn.cursor()
             cursor.execute(query)
-
             data = cursor.fetchall()
 
             return data
@@ -172,7 +150,25 @@ class FaceDB(object):
 
             cursor = conn.cursor()
             cursor.execute(query)
+            data = cursor.fetchall()
 
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def query_all_courses(self):
+        query = "SELECT id, name FROM course"
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query)
             data = cursor.fetchall()
 
             return data
@@ -192,7 +188,6 @@ class FaceDB(object):
 
             cursor = conn.cursor()
             cursor.execute(query)
-
             data = cursor.fetchall()
 
             return data
@@ -223,9 +218,91 @@ class FaceDB(object):
             cursor.close()
             conn.close()
 
+    def query_course_students(self, course_id):
+        query = "SELECT course_id, student_id FROM course_student " \
+                "WHERE course_student.course_id = %s"
+
+        args = (course_id,)
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+
+            data = cursor.fetchall()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def delete_course_students(self, course_id):
+        query = "DELETE FROM course_student " \
+                "WHERE course_student.course_id = %s"
+
+        args = (course_id,)
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+            conn.commit()
+
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def insert_course_student(self, course_id, student_id):
+        query = "INSERT INTO course_student(course_id, student_id) " \
+                "VALUES(%s, %s)"
+
+        args = (course_id, student_id)
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+            conn.commit()
+
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def insert_course_students(self, data_tuple_list):
+        query = "INSERT INTO course_student(course_id, student_id) " \
+                "VALUES(%s, %s)"
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.executemany(query, data_tuple_list)
+            conn.commit()
+
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
     def query_student(self, student_id ):
         query = "SELECT id, name, email, picture FROM STUDENT " \
-                 "WHERE STUDENT.id = %s"
+                "WHERE STUDENT.id = %s"
 
         args = (student_id, )
 
@@ -246,7 +323,7 @@ class FaceDB(object):
             cursor.close()
             conn.close()
 
-    def query_course(self, classroom_id ):
+    def query_course_with_classroom(self, classroom_id):
         query = "SELECT course.id, course.name " \
                 "FROM course, classroom_course "  \
                 "WHERE classroom_course.course_id = course.id AND "  \
@@ -295,8 +372,57 @@ class FaceDB(object):
             cursor.close()
             conn.close()
 
+    def update_classroom_pic(self, classroom_id, classroom_name, picture_file):
+        query = "INSERT INTO CLASSROOM(id, name, picture) " \
+                 "VALUES(%s, %s, %s) " \
+                 "ON DUPLICATE KEY " \
+                 "UPDATE name = %s, picture = %s "
+
+        picture = self.read_file(picture_file)
+        args = (classroom_id, classroom_name, picture, classroom_name, picture)
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+            conn.commit()
+
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    def query_all_classroom_with_images(self):
+        query = "SELECT id, name, picture FROM CLASSROOM"
+
+        try:
+            db_config = self.read_db_config()
+            conn = MySQLConnection(**db_config)
+
+            cursor = conn.cursor()
+            cursor.execute(query)
+            data = cursor.fetchall()
+
+            return data
+        except Error as error:
+            print(error)
+
+        finally:
+            cursor.close()
+            conn.close()
+
 
 if __name__ == '__main__':
     app = FaceDB()
-    data4 = app.insert_student_attendance('912222', 'SWE 680', datetime.datetime.now())
-    print(data4)
+    #for index in range(98031, 98034):
+    #    student_name = str(index)
+    #    print(student_name)
+    #    student_email = student_name + '@itu.edu'
+    #    student_pic = '../random_face/' + student_name + '.jpg'
+    #    app.insert_student(index, student_name, student_email, student_pic)
+    app.update_classroom_pic('R000', 'R-000', '../R000.jpg')
+    sys.exit()

@@ -2,33 +2,27 @@ import sys
 import cv2
 import face_recognition
 import pickle
-import datetime
 
 from Student import Student
 from collections import defaultdict
 from FaceDB import FaceDB
-from CheckedInThread import CheckedInThread
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QImage, QPixmap, QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.uic import loadUi
 
 
-class FaceRecognition(QMainWindow):
+class SchoolEntrance(QMainWindow):
     faceDB = FaceDB()
-    classroom_id = 'R301'
-    classroom_name = None
-    course_id = None
-    course_name = None
 
-    students_course_dictionary = {}
     all_course_classroom_dictionary = {}
     all_students_course_dictionary = {}
     all_students_dictionary = {}
-    checked_in_students = {}
-    rejected_students = {}
+    all_course_dictionary = {}
+    all_class_dictionary = {}
 
+    last_student_id = None
     capture = None
     open_face_enabled = False
     face_locations = None
@@ -46,26 +40,28 @@ class FaceRecognition(QMainWindow):
     msec_timer = 10
 
     def __init__(self):
-        super(FaceRecognition, self).__init__()
-        loadUi('03_face_recognition.ui', self)
-
-        self.checked_in_list_model = QStandardItemModel(self.checkedInListView)
-        self.checkedInListView.setModel(self.checked_in_list_model)
-
-        self.rejected_list_model = QStandardItemModel(self.rejectedCheckedInListView)
-        self.rejectedCheckedInListView.setModel(self.rejected_list_model)
+        super(SchoolEntrance, self).__init__()
+        loadUi('04_school_entrance.ui', self)
 
         self.load_remote_db()
-        self.setUIClassroomText()
 
         self.load_open_face()
+        self.clearDisplay()
+        self.clearTimer = None
+
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.startWebCam()
         self.openface_button_clicked(True)
 
     def load_remote_db(self):
-        # ALL_STUDENTS
         print("# LOADING DATA FROM DATABASE...")
+        # ALL_CLASSROOMS
+        data = self.faceDB.query_all_classroom_with_images()
+        for row in data:
+            # print(row[0], row[1], row[2])
+            self.all_class_dictionary[str(row[0])] = row[2]
+
+        # ALL_STUDENTS
         data = self.faceDB.query_all_student_no_images()
         for row in data:
             # print(row[0], row[1], row[2])
@@ -76,34 +72,25 @@ class FaceRecognition(QMainWindow):
                 student.email = row[2]
                 self.all_students_dictionary[str(row[0])] = student
 
-        # CLASSROOM
-        self.classroom_name = self.faceDB.query_classroom(self.classroom_id)[1]
-
-        # COURSE
-        self.course_id = self.faceDB.query_course_with_classroom(self.classroom_id)[0]
-        self.course_name = self.faceDB.query_course_with_classroom(self.classroom_id)[1]
+        # ALL_COURSES
+        data = self.faceDB.query_all_courses()
+        for row in data:
+            # print(row[0], row[1],)
+            self.all_course_dictionary[str(row[0])] = row[1]
 
         # STUDENTS_COURSE and ALL_STUDENTS_COURSE
         data = self.faceDB.query_all_course_students()
         for row in data:
             # print(row[0], row[1])
-            if row[0] == self.course_id:
-                self.students_course_dictionary[row[1]]= row[0]
-            else:
-                self.all_students_course_dictionary[row[1]]= row[0]
+            self.all_students_course_dictionary[row[1]] = row[0]
 
         # ALL_COURSE_CLASSROOMS
         data = self.faceDB.query_all_course_classroom()
         for row in data:
             # print(row[0], row[1])
-            self.all_course_classroom_dictionary[row[0]]= row[1]
+            self.all_course_classroom_dictionary[row[0]] = row[1]
 
         print("# LOADING COMPLETED!")
-
-    def setUIClassroomText(self):
-        self.roomText.setText(self.classroom_name)
-        self.courseText.setText(self.course_id + " - " + self.course_name)
-        self.registeredStudentNumber.setText(str(len(self.students_course_dictionary)))
 
     def load_open_face(self):
         with open('trainer/openface_trainer_encodings', 'rb') as fp:
@@ -127,6 +114,11 @@ class FaceRecognition(QMainWindow):
         timer = QTimer(self)
         timer.timeout.connect(self.update_frame)
         timer.start(self.msec_timer)
+
+    def clearDisplay(self):
+        self.displayPlan(self.all_class_dictionary['R000'])
+        self.welcomeLabel.setText('')
+        QApplication.processEvents()
 
     def update_frame(self):
         ret, image = self.capture.read()
@@ -171,28 +163,24 @@ class FaceRecognition(QMainWindow):
                     student_id = self.openface_known_face_ids[first_match_index]
                     # Check if already checked in class
 
-                    if student_id not in self.checked_in_students and student_id not in self.rejected_students:
-                        # Set the initial recognized frame
-                        if self.recognized_frame_start[student_id] == 0:
-                            self.recognized_frame_start[student_id] = self.all_frame_count
+                    # Set the initial recognized frame
+                    if self.recognized_frame_start[student_id] == 0:
+                        self.recognized_frame_start[student_id] = self.all_frame_count
 
-                        self.recognized_frame_count[student_id] += 1
+                    self.recognized_frame_count[student_id] += 1
 
-                        if (self.all_frame_count - self.recognized_frame_start[student_id]) >= self.recognition_check_frame:
+                    if (self.all_frame_count - self.recognized_frame_start[student_id]) >= self.recognition_check_frame:
 
-                            if self.recognized_frame_count[student_id] >= self.confidence_frame_count:
+                        if self.recognized_frame_count[student_id] >= self.confidence_frame_count:
 
-                                if student_id in self.students_course_dictionary:
-                                    self.checkedInStudent(student_id)
-                                elif student_id in self.all_students_course_dictionary:
-                                    self.rejectStudent(student_id)
-                                else:
-                                    print("==UNKNOWN CASE")
+                            if student_id != self.last_student_id:
+                                self.last_student_id = student_id
+                                self.displayWelcome(student_id)
 
-                            else: # reset counters
-                                print(self.recognized_frame_count[student_id], " - reset counters")
-                                self.recognized_frame_start[student_id] = 0
-                                self.recognized_frame_count[student_id] = 0
+                        else: # reset counters
+                            print(self.recognized_frame_count[student_id], " - reset counters")
+                            self.recognized_frame_start[student_id] = 0
+                            self.recognized_frame_count[student_id] = 0
 
                     name = self.getNameFromDB(student_id)
 
@@ -214,29 +202,28 @@ class FaceRecognition(QMainWindow):
             cv2.putText(img, name, (left + 6, bottom - 6), self.font, 1, (255, 255, 255), 2)
         return img
 
-    def checkedInStudent(self, student_id):
-        self.checked_in_students[student_id] = True
+    def displayWelcome(self, student_id):
         student = self.getStudentFromDB(student_id)
-        now = datetime.datetime.now()
-        item_string = str(now.hour).zfill(2) + ':' + str(now.minute).zfill(2) + ' - ' + str(
-            student_id) + ' : ' + student.full_name + '  '
-        item = QStandardItem(item_string)
-        self.checked_in_list_model.insertRow(0, item)
-        self.checkedInStudentNumber.setText(str(len(self.checked_in_students)))
-        new_thread = CheckedInThread(student_id, student.full_name, student.email,
-                                      self.course_id, self.course_name, self.classroom_name, now)
-        new_thread.start()
+        course_id = self.all_students_course_dictionary[student_id]
+        course_name = self.all_course_dictionary[course_id]
+        classroom_id = self.all_course_classroom_dictionary[course_id]
+        welcomeText = '<small>Welcome</small>' + '<br>' + \
+                      '<big>' + student.full_name.split()[0] + ' (' + student_id + ')' + '</big>' + '<br>' + \
+                      'Your Course : ' + course_id + ' - ' + course_name + '<br>' + \
+                      'Your Class ==> ' + classroom_id
+        self.welcomeLabel.setText(welcomeText)
+        self.displayPlan(self.all_class_dictionary[classroom_id])
+        self.start_clear_timer()
 
-    def rejectStudent(self, student_id):
-        self.rejected_students[student_id] = True
-        full_name = self.getFullNameFromDB(student_id)
-        now = datetime.datetime.now()
-        item_string = str(now.hour).zfill(2) + ':' + str(now.minute).zfill(2) + ' - ' + \
-            str(student_id) + ' : ' + full_name + '  '
-        correct_course = self.all_students_course_dictionary[str(student_id)]
-        correct_classroom = self.all_course_classroom_dictionary[correct_course]
-        item = QStandardItem(item_string + '=> ' + correct_course + ' : ' + correct_classroom)
-        self.rejected_list_model.insertRow(0, item)
+    def start_clear_timer(self):
+        self.clearTimer = QTimer(self)
+        self.clearTimer.timeout.connect(self.stop_clear_timer)
+        self.clearTimer.start(10000)
+
+    def stop_clear_timer(self):
+        self.clearTimer.stop()
+        self.last_student_id = None
+        self.clearDisplay()
 
     def displayImage(self, img):
         qformat=QImage.Format_Indexed8
@@ -251,6 +238,12 @@ class FaceRecognition(QMainWindow):
 
         self.webCamLabel.setPixmap(QPixmap.fromImage(outImage))
         self.webCamLabel.setScaledContents(True)
+
+    def displayPlan(self, img):
+        qimg = QImage.fromData(img)
+        pixmap = QPixmap.fromImage(qimg)
+        self.roomPlan.setPixmap(pixmap)
+        self.roomPlan.setScaledContents(True)
 
     def stopWebCam(self):
         self.timer.stop()
@@ -279,8 +272,8 @@ class FaceRecognition(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = FaceRecognition()
-    window.setWindowTitle("Class Attendance Checker")
+    window = SchoolEntrance()
+    window.setWindowTitle("Welcome System")
     window.setStyleSheet("""
                     QPushButton {
                         border: 2px solid #8f8f91;
