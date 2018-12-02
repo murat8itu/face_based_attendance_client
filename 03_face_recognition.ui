@@ -111,7 +111,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Rejected List </string>
+     <string>Course Helper</string>
     </property>
    </widget>
    <widget class="QLabel" name="registeredStudentNumberLabel">
