@@ -24,7 +24,7 @@ class FaceDataSet(QMainWindow):
 
     def __init__(self):
         super(FaceDataSet, self).__init__()
-        loadUi('01_face_dataset.ui', self)
+        loadUi('01_data_entry.ui', self)
         self.faceDetector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
         self.addToDatasetButton.clicked.connect(self.detect_webcam_face)
 

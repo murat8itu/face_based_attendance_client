@@ -414,15 +414,3 @@ class FaceDB(object):
         finally:
             cursor.close()
             conn.close()
-
-
-if __name__ == '__main__':
-    app = FaceDB()
-    #for index in range(98031, 98034):
-    #    student_name = str(index)
-    #    print(student_name)
-    #    student_email = student_name + '@itu.edu'
-    #    student_pic = '../random_face/' + student_name + '.jpg'
-    #    app.insert_student(index, student_name, student_email, student_pic)
-    app.update_classroom_pic('R000', 'R-000', '../R000.jpg')
-    sys.exit()

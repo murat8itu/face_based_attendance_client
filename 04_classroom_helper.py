@@ -41,7 +41,7 @@ class SchoolEntrance(QMainWindow):
 
     def __init__(self):
         super(SchoolEntrance, self).__init__()
-        loadUi('04_school_entrance.ui', self)
+        loadUi('04_classroom_helper.ui', self)
 
         self.load_remote_db()
 
@@ -273,7 +273,7 @@ class SchoolEntrance(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = SchoolEntrance()
-    window.setWindowTitle("Welcome System")
+    window.setWindowTitle("Classroom Helper")
     window.setStyleSheet("""
                     QPushButton {
                         border: 2px solid #8f8f91;

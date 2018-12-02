@@ -2,8 +2,6 @@ import threading
 from FaceDB import FaceDB
 import smtplib
 import datetime
-# from email.MIMEMultipart import MIMEMultipart
-# from email.MIMEText import MIMEText
 
 
 class CheckedInThread(threading.Thread):

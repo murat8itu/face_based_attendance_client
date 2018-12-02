@@ -47,7 +47,7 @@ class FaceRecognition(QMainWindow):
 
     def __init__(self):
         super(FaceRecognition, self).__init__()
-        loadUi('03_face_recognition.ui', self)
+        loadUi('03_attendance_recorder.ui', self)
 
         self.checked_in_list_model = QStandardItemModel(self.checkedInListView)
         self.checkedInListView.setModel(self.checked_in_list_model)
@@ -280,7 +280,7 @@ class FaceRecognition(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = FaceRecognition()
-    window.setWindowTitle("Class Attendance Checker")
+    window.setWindowTitle("Class Attendance Recorder")
     window.setStyleSheet("""
                     QPushButton {
                         border: 2px solid #8f8f91;
